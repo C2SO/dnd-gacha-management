@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import UnitCard from './UnitCard.vue'
 import { useSession } from '../composables/useSession'
-import { bannerOdds, MAX_PULLS, type DrawResult } from '../utils/drawEngine'
+import { MAX_PULLS, type DrawResult } from '../utils/drawEngine'
 
 const session = useSession()
 const { state } = session
@@ -34,8 +34,12 @@ watch(
 const banner = computed(() => session.banners.value.find((b) => b.id === bannerId.value))
 const stock = computed(() => session.stockFor(bannerId.value))
 const remaining = computed(() => session.remainingOn(bannerId.value))
-const odds = computed(() => (banner.value ? bannerOdds(banner.value) : { 3: 0, 4: 0, 5: 0 }))
 const player = computed(() => state.players.find((p) => p.id === playerId.value))
+
+/** Every asset is equally likely, so the chance of any one of them is simply 1/pool. */
+const perAssetOdds = computed(() =>
+  remaining.value ? `1 in ${remaining.value} · ${(100 / remaining.value).toFixed(1)}% each` : '—',
+)
 
 const canSummon = computed(() => !!player.value && !!banner.value && remaining.value > 0)
 
@@ -55,14 +59,9 @@ function summon() {
   if (outcome.exhausted) {
     notes.value.push(
       outcome.results.length
-        ? `Banner ran dry after ${outcome.results.length} of ${pullCount.value} draws.`
-        : 'That banner is empty — nothing left to summon.',
+        ? `Slot ran dry after ${outcome.results.length} of ${pullCount.value} draws.`
+        : 'That slot is sold out — nothing left to summon.',
     )
-  }
-  for (const r of outcome.results) {
-    if (r.tier !== r.rolledTier) {
-      notes.value.push(`${r.unit.name}: ${r.rolledTier}★ pool empty, stepped to ${r.tier}★.`)
-    }
   }
 }
 </script>
@@ -70,17 +69,18 @@ function summon() {
 <template>
   <section>
     <header class="head">
-      <h2 class="section-title">Summon</h2>
+      <h2 class="section-title">Sponsor draw</h2>
       <p class="section-sub">
-        One d100 per draw. Anything pulled leaves the pool for the whole table — nobody draws the
-        same operative twice.
+        One die, one face per asset left in the slot. Every asset is exactly as likely as any
+        other — a 5★ is no rarer to draw than a 3★. Anything drawn leaves the slot for the whole
+        arena; no asset is ever sponsored twice.
       </p>
     </header>
 
     <div class="deck">
       <aside class="console panel">
         <div class="field">
-          <label class="label" for="who">Runner</label>
+          <label class="label" for="who">Contender</label>
           <select id="who" v-model="playerId">
             <option v-for="p in state.players" :key="p.id" :value="p.id">
               {{ p.name }}{{ p.className ? ` — ${p.className}` : '' }}
@@ -89,7 +89,7 @@ function summon() {
         </div>
 
         <div class="field">
-          <label class="label" for="banner">Banner</label>
+          <label class="label" for="banner">Broadcast slot</label>
           <select id="banner" v-model.number="bannerId">
             <option v-for="b in session.banners.value" :key="b.id" :value="b.id">
               {{ b.id }} · {{ b.name }}
@@ -119,22 +119,22 @@ function summon() {
         </button>
 
         <div class="stockbox">
-          <div class="odds label">
-            3★ {{ odds[3] }}% · 4★ {{ odds[4] }}% · 5★ {{ odds[5] }}%
-          </div>
+          <div class="odds label">Even odds · {{ perAssetOdds }}</div>
           <div class="stock-row mono">
             <span class="r3">{{ stock[3] }}×3★</span>
             <span class="r4">{{ stock[4] }}×4★</span>
             <span class="r5">{{ stock[5] }}×5★</span>
           </div>
-          <div class="label total">{{ remaining }} left on this banner</div>
+          <div class="label total">{{ remaining }} assets left in this slot</div>
         </div>
       </aside>
 
       <div class="stage">
         <div v-if="results.length || notes.length" class="readout panel">
           <div class="rolls mono">
-            <span v-for="(r, i) in results" :key="i" class="roll" :class="`r${r.unit.rarity}`">{{ r.roll }}</span>
+            <span v-for="(r, i) in results" :key="i" class="roll" :class="`r${r.unit.rarity}`">
+              {{ r.roll }}<small>d{{ r.poolSize }}</small>
+            </span>
           </div>
           <div class="verdict">
             <span v-if="results.length" class="mono">
@@ -153,14 +153,14 @@ function summon() {
             :key="`${r.unit.id}-${i}`"
             :unit="r.unit"
             :roll="r.roll"
-            :shifted-from="r.tier === r.rolledTier ? null : r.rolledTier"
+            :pool-size="r.poolSize"
             :index="i"
           />
         </div>
 
         <div v-else-if="!notes.length" class="empty label">
-          <p>Terminal idle.</p>
-          <p>Select a runner, pick a banner, choose 1–5 draws.</p>
+          <p>Terminal idle. Sponsors standing by.</p>
+          <p>Select a contender, pick a slot, choose 1–5 draws.</p>
         </div>
       </div>
     </div>
@@ -271,6 +271,14 @@ function summon() {
   font-size: 2rem;
   font-weight: 500;
   line-height: 1;
+}
+
+.roll small {
+  display: block;
+  font-size: 0.55rem;
+  letter-spacing: 0.16em;
+  color: var(--text-faint);
+  margin-top: 0.2rem;
 }
 
 .verdict {

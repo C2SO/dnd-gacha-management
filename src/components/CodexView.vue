@@ -93,10 +93,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   <section>
     <header class="head">
       <div>
-        <h2 class="section-title">Codex</h2>
+        <h2 class="section-title">Asset codex</h2>
         <p class="section-sub">
-          Every operative on file, who holds them, and what is still in the pool. Read-only — the
-          roster is edited in characters.csv.
+          Every asset the sponsors have on file, who holds them, and what is still up for draw.
+          Read-only — the roster is edited in characters.csv.
         </p>
       </div>
       <div class="totals">
@@ -107,7 +107,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     </header>
 
     <div class="filters panel">
-      <input v-model="query" type="search" placeholder="Search name, game or role…" aria-label="Search codex" />
+      <input v-model="query" type="search" placeholder="Search name, sponsor or role…" aria-label="Search codex" />
 
       <select v-model="statusFilter" aria-label="Status">
         <option value="all">Any status</option>
@@ -116,9 +116,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         <option value="retired">Retired</option>
       </select>
 
-      <select v-model="bannerFilter" aria-label="Banner">
-        <option value="all">Any banner</option>
-        <option v-for="b in session.banners.value" :key="b.id" :value="b.id">Banner {{ b.id }}</option>
+      <select v-model="bannerFilter" aria-label="Slot">
+        <option value="all">Any slot</option>
+        <option v-for="b in session.banners.value" :key="b.id" :value="b.id">Slot {{ b.id }}</option>
       </select>
 
       <select v-model="rarityFilter" aria-label="Rarity">
@@ -128,8 +128,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         <option :value="3">3★</option>
       </select>
 
-      <select v-model="gameFilter" aria-label="Game">
-        <option value="all">Any game</option>
+      <select v-model="gameFilter" aria-label="Sponsor">
+        <option value="all">Any sponsor</option>
         <option v-for="game in games" :key="game" :value="game">{{ game }}</option>
       </select>
 
@@ -167,7 +167,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         <span class="info">
           <span class="name">{{ unit.name }}</span>
           <span class="stars" :class="`r${unit.rarity}`">{{ '★'.repeat(unit.rarity) }}</span>
-          <span class="meta label">{{ unit.role }} · {{ unit.game }} · B{{ unit.bannerId }}</span>
+          <span class="meta label">{{ unit.role }} · Slot {{ unit.bannerId }}</span>
+          <span class="sponsor label">{{ unit.game }}</span>
         </span>
         <span class="status label">
           <template v-if="statusOf(unit) === 'claimed'">
@@ -179,7 +180,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       </button>
     </div>
 
-    <p v-if="!filtered.length" class="empty label">No operatives match those filters.</p>
+    <p v-if="!filtered.length" class="empty label">No assets match those filters.</p>
 
     <div v-if="selected" class="overlay" @click.self="selected = null">
       <div class="detail" role="dialog" aria-modal="true" :aria-label="selected.name">
@@ -322,6 +323,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 .meta {
   letter-spacing: 0.1em;
+  overflow-wrap: anywhere;
+}
+
+.sponsor {
+  letter-spacing: 0.1em;
+  color: var(--magenta);
   overflow-wrap: anywhere;
 }
 

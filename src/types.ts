@@ -49,13 +49,13 @@ export const ABILITIES = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'] as const
 export type Ability = (typeof ABILITIES)[number]
 export type SaveMods = Record<Ability, string>
 
+/**
+ * A draw pool. Under Even Odds rules a banner carries no weighting of its own — every asset
+ * still in it is equally likely — so there is nothing to configure but the name.
+ */
 export interface Banner {
   id: number
   name: string
-  /** d100 <= t3 yields 3★. */
-  t3: number
-  /** d100 <= t4 (and > t3) yields 4★; anything higher is 5★. */
-  t4: number
 }
 
 export interface Player {
@@ -70,12 +70,12 @@ export interface Draw {
   unitId: number
   playerId: string
   bannerId: number
-  /** The d100 that produced this draw. */
+  /**
+   * The face rolled on a die with one side per asset left in the pool. Recorded with
+   * `poolSize` so the ledger can show the true odds of the draw as it happened.
+   */
   roll: number
-  /** Rarity actually awarded. */
-  tier: number
-  /** Set when the rolled tier was empty and the draw stepped to a different one. */
-  shiftedFrom: number | null
+  poolSize: number
   /** ISO timestamp. */
   at: string
 }
@@ -88,7 +88,7 @@ export interface SessionSettings {
 /** The whole application state, and byte-for-byte what import/export writes. */
 export interface SessionFile {
   format: 'dnd-gacha-session'
-  version: 1
+  version: 2
   savedAt: string
   settings: SessionSettings
   catalog: Unit[]
@@ -97,4 +97,5 @@ export interface SessionFile {
 }
 
 export const SESSION_FORMAT = 'dnd-gacha-session'
-export const SESSION_VERSION = 1
+/** v2 dropped per-banner rarity thresholds in favour of flat Even Odds draws. */
+export const SESSION_VERSION = 2

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import SaveChip from './components/SaveChip.vue'
+import SponsorTicker from './components/SponsorTicker.vue'
 import DraftView from './components/DraftView.vue'
 import SummonView from './components/SummonView.vue'
 import CodexView from './components/CodexView.vue'
@@ -38,9 +39,11 @@ const unitCount = computed(() => session.state.catalog.filter((u) => !u.retired)
     <header class="masthead">
       <div class="brand">
         <div class="wordmark">
-          NEURO<span>SUMMON</span>
+          EVEN<span>ODDS</span>
         </div>
-        <div class="tagline label">Draw terminal · node 07 · {{ unitCount }} units indexed</div>
+        <div class="tagline label">
+          Thunderdome · sponsor draw terminal · {{ unitCount }} assets indexed
+        </div>
       </div>
 
       <SaveChip />
@@ -66,7 +69,10 @@ const unitCount = computed(() => session.state.catalog.filter((u) => !u.retired)
     </main>
 
     <footer>
-      <span class="label">Front-end only · nothing leaves this browser · export to keep a copy</span>
+      <SponsorTicker />
+      <span class="label fineprint">
+        Front-end only · nothing leaves this browser · export to keep a copy
+      </span>
     </footer>
   </div>
 </template>
@@ -179,6 +185,12 @@ main {
 footer {
   border-top: 1px solid var(--line);
   padding: var(--sp-4) 0 var(--sp-6);
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.fineprint {
+  color: var(--text-faint);
 }
 
 @media (max-width: 720px) {

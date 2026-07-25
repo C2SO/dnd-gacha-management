@@ -16,10 +16,10 @@ const canAddPlayer = computed(() => state.players.length < MAX_PLAYERS)
   <section>
     <header class="head">
       <div>
-        <h2 class="section-title">Class draft</h2>
+        <h2 class="section-title">Contender draft</h2>
         <p class="section-sub">
-          The grid rewrites what they were. Every runner wakes up as a different class — no class is
-          ever handed out twice.
+          The Thunderdome decides what you walk in as. Every contender draws a different class —
+          no class is ever handed out twice, and nobody gets to pick.
         </p>
       </div>
       <div class="counters">
@@ -54,13 +54,13 @@ const canAddPlayer = computed(() => state.players.length < MAX_PLAYERS)
         Draw all unassigned
       </button>
       <button class="btn" type="button" :disabled="!canAddPlayer" @click="session.addPlayer()">
-        Add runner
+        Add contender
       </button>
       <button class="btn btn-danger" type="button" :disabled="unassigned === state.players.length" @click="session.clearClasses()">
         Clear classes
       </button>
       <p v-if="!canAddPlayer" class="note label">
-        Capped at {{ MAX_PLAYERS }} runners — one per class.
+        Capped at {{ MAX_PLAYERS }} contenders — one per class.
       </p>
       <p v-else-if="!remaining" class="note label">Every class is spoken for.</p>
     </div>

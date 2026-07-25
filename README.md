@@ -1,24 +1,37 @@
-# NEUROSUMMON — D&D one-shot draw terminal
+# EVEN ODDS — Thunderdome draw terminal
 
-A front-end-only Vue 3 app for running a cyberpunk D&D one-shot: draft classes, run gacha-style
-summons, and keep a ledger of who pulled what. No server, no database, no accounts — the whole
-session lives in the browser and travels as a single JSON file.
+A front-end-only Vue 3 app for running a cyberpunk D&D one-shot at the Thunderdome. Contenders
+draft classes, corporate sponsors supply the summons, and the ledger records who drew what. No
+server, no database, no accounts — the whole session lives in the browser and travels as a
+single JSON file.
+
+**This season's rule is Even Odds:** a draw is one die with a single face per asset still in the
+slot. Every asset is exactly as likely as any other, and rarity is descriptive only. There is
+nothing to weight and nothing to configure.
 
 **Live site:** https://c2so.github.io/dnd-gacha-management/
 
 ## What it does
 
-- **Draft** — each runner draws a D&D class. A class is never handed out twice.
-- **Summon** — pick a runner, a banner, and 1–5 draws. A d100 decides the rarity per draw.
-  Anything pulled leaves the pool **for the whole table**, so no character is ever summoned twice.
-  If a rarity runs out, the draw steps to the nearest tier that still has stock and says so.
-- **Codex** — every character on file, filterable, showing whether they are still summonable and
-  who claimed them if not.
-- **Ledger** — the full draw history, chronologically or grouped per runner.
-- **Session** — export/import the save file, re-import `characters.csv`, edit banner names and
-  odds, reset.
+- **Draft** — each contender draws a D&D class. A class is never handed out twice, and nobody
+  gets to pick.
+- **Summon** — pick a contender, a broadcast slot, and 1–5 draws. Each draw rolls a die with one
+  face per remaining asset, so a 5★ is no rarer to draw than a 3★. Anything drawn leaves the slot
+  **for the whole arena**, so no asset is ever sponsored twice.
+- **Codex** — every asset on file, filterable by sponsor, slot, rarity, role and status, showing
+  what is still up for draw and who holds the rest.
+- **Ledger** — the full draw history, chronologically or grouped per contender.
+- **Session** — export/import the save file, re-import `characters.csv`, rename slots, reset.
 
-There is no pity system, no reroll card, and no auto-rolled HP — HP comes from the CSV.
+There is no pity system, no reroll card, no rarity weighting, and no auto-rolled HP — HP comes
+from the CSV.
+
+### A note on rarity
+
+Rarity never changes a draw's probability. It does still shape what you see overall, because the
+slots hold different mixes: slot 1 is 17/9/4 across 3★/4★/5★ while slot 3 is 12/10/8. Drawing
+from slot 3 yields more 5★s simply because more of them are in the bowl — not because the die is
+tilted. The summon console shows both the flat per-asset odds and the current mix.
 
 
 ## Character data
@@ -56,10 +69,10 @@ optional and renders only when present.
 | --- | --- |
 | `ID` | Positive whole number, unique. The stable identity. |
 | `Name` | Display name. |
-| `Game` | Source franchise. |
+| `Game` | Source franchise — shown in-app as the character's corporate sponsor. |
 | `Type` | DPS / Support / Tank — free text, used for filtering. |
-| `Banner` | Which banner the character can be summoned from. |
-| `Rarity` | `3`, `4` or `5`. |
+| `Banner` | Which broadcast slot the asset can be drawn from. |
+| `Rarity` | `3`, `4` or `5`. Shown on the card; has no effect on draw probability. |
 | `HP`, `HPFormula` | Fixed HP value plus the formula shown beneath it (e.g. `6d8+8`). |
 | `AC`, `AttackBonus`, `Speed` | Shown in the stat strip. |
 | `AttackKind`, `AttackAbility`, `AttackRange`, `AttackTargets` | Joined into the profile line. |
@@ -78,7 +91,7 @@ is what Excel usually writes. It also repairs the classic double-encoding artefa
 
 ## The save file
 
-*Export session JSON* writes one file containing the catalog, runners, banners, settings and the
+*Export session JSON* writes one file containing the catalog, contenders, slots, settings and the
 complete ledger, so importing it elsewhere restores the session exactly. The app also autosaves
 to `localStorage` after every change; the chip in the header shows the last write. In a browser
 where storage is blocked the chip warns that only exports will persist.
@@ -86,30 +99,33 @@ where storage is blocked the chip warns that only exports will persist.
 ```jsonc
 {
   "format": "dnd-gacha-session",
-  "version": 1,
+  "version": 2,
   "savedAt": "2026-07-25T21:00:00.000Z",
   "settings": {
     "classes": ["Barbarian", "..."],
-    "banners": [{ "id": 1, "name": "Cold Boot — Street Grid", "t3": 57, "t4": 87 }]
+    "banners": [{ "id": 1, "name": "Opening Slate" }]   // name only — nothing to weight
   },
   "catalog": [{ "id": 1, "name": "Rawiyah", "bannerId": 1, "rarity": 3, "...": "..." }],
-  "players": [{ "id": "runner-…", "name": "Runner 1", "className": "Rogue" }],
+  "players": [{ "id": "contender-…", "name": "Contender 1", "className": "Rogue" }],
   "draws": [
     {
       "seq": 1,
       "unitId": 4,
-      "playerId": "runner-…",
+      "playerId": "contender-…",
       "bannerId": 1,
-      "roll": 92,      // the d100
-      "tier": 5,       // rarity awarded
-      "shiftedFrom": null, // set when the rolled tier was empty
+      "roll": 17,       // face rolled
+      "poolSize": 30,   // faces on the die, i.e. assets available at the time
       "at": "2026-07-25T21:00:00.000Z"
     }
   ]
 }
 ```
 
-Banner thresholds are read as: `d100 ≤ t3` → 3★, `≤ t4` → 4★, above → 5★.
+Rarity is not stored on a draw — it is read from the catalog, so re-grading a character in the
+CSV updates past ledger entries too.
+
+Save files written before the Even Odds rewrite (`version: 1`) still load: their banner
+thresholds and per-draw rarity fields are dropped, and everything else is preserved.
 
 ## Running it locally
 

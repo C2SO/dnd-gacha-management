@@ -6,15 +6,15 @@ import { ABILITIES } from '../types'
 const props = withDefaults(
   defineProps<{
     unit: Unit
-    /** d100 that produced this card, when shown as a summon result. */
+    /** Die face that produced this card, when shown as a draw result. */
     roll?: number | null
-    /** Set when the rolled rarity was empty and the draw stepped tiers. */
-    shiftedFrom?: number | null
+    /** Faces on that die, i.e. how many assets were in the pool. */
+    poolSize?: number | null
     claimedBy?: string | null
     /** Stagger index for the reveal animation. */
     index?: number
   }>(),
-  { roll: null, shiftedFrom: null, claimedBy: null, index: 0 },
+  { roll: null, poolSize: null, claimedBy: null, index: 0 },
 )
 
 const imageFailed = ref(false)
@@ -89,18 +89,16 @@ const proficient = computed(() => new Set(props.unit.saveProficient))
       <div class="ident">
         <h3 class="name">{{ unit.name }}</h3>
         <div class="stars" :class="`r${unit.rarity}`">{{ '★'.repeat(unit.rarity) }}</div>
-        <div class="meta label">{{ unit.role }} · {{ unit.game }} · Banner {{ unit.bannerId }}</div>
+        <div class="meta label">{{ unit.role }} · Slot {{ unit.bannerId }}</div>
+        <div class="sponsor label">Sponsored by {{ unit.game }}</div>
       </div>
 
       <div v-if="roll !== null" class="roll mono">
         <span class="roll-value">{{ roll }}</span>
-        <span class="label">d100</span>
+        <span class="label">{{ poolSize ? `d${poolSize}` : 'roll' }}</span>
       </div>
     </header>
 
-    <p v-if="shiftedFrom" class="shift label">
-      {{ shiftedFrom }}★ pool empty — stepped to {{ unit.rarity }}★
-    </p>
     <p v-if="claimedBy" class="claim label">Claimed by {{ claimedBy }}</p>
     <p v-if="unit.retired" class="claim label">Retired — no longer in the draw pool</p>
 
@@ -246,6 +244,12 @@ const proficient = computed(() => new Set(props.unit.saveProficient))
   letter-spacing: 0.12em;
 }
 
+.sponsor {
+  margin-top: 0.25rem;
+  letter-spacing: 0.1em;
+  color: var(--magenta);
+}
+
 .roll {
   text-align: right;
   line-height: 1;
@@ -258,17 +262,12 @@ const proficient = computed(() => new Set(props.unit.saveProficient))
   color: var(--cyan);
 }
 
-.shift,
 .claim {
   margin: 0;
   padding: 0.5rem var(--sp-4);
   border-bottom: 1px solid var(--line);
-  color: var(--amber);
-  letter-spacing: 0.12em;
-}
-
-.claim {
   color: var(--text-dim);
+  letter-spacing: 0.12em;
 }
 
 .stats {

@@ -1,24 +1,28 @@
-import type { Banner, Unit } from '../types'
-import { pick, rollD100 } from './random'
+import type { Unit } from '../types'
+// Explicit .ts extension so this module can also be imported directly by Node (which, unlike
+// Vite, will not infer the extension) for statistical checks on the draw distribution.
+import { rollDie } from './random.ts'
 
 /**
  * Pure draw logic — no Vue, no storage, no DOM. Everything the summon screen does routes
  * through here so the rules live in one testable place.
+ *
+ * Even Odds rules: a draw is a single fair die with one face per asset still in the pool.
+ * Rarity is descriptive only — a 5★ is exactly as likely as a 3★. There is no weighting to
+ * configure, and consequently no tier to fall back from when one runs out.
  */
 
 export interface DrawResult {
   unit: Unit
-  /** The d100 that was rolled. */
+  /** Face rolled on the pool die. */
   roll: number
-  /** Rarity the roll called for. */
-  rolledTier: number
-  /** Rarity actually awarded — differs from `rolledTier` only when that tier was empty. */
-  tier: number
+  /** Number of faces on that die, i.e. how many assets were up for grabs. */
+  poolSize: number
 }
 
 export interface SummonOutcome {
   results: DrawResult[]
-  /** True when the banner ran dry before `count` draws were made. */
+  /** True when the pool ran dry before `count` draws were made. */
   exhausted: boolean
 }
 
@@ -26,22 +30,7 @@ export const RARITIES = [3, 4, 5] as const
 export const MIN_PULLS = 1
 export const MAX_PULLS = 5
 
-export function tierForRoll(roll: number, banner: Banner): number {
-  if (roll <= banner.t3) return 3
-  if (roll <= banner.t4) return 4
-  return 5
-}
-
-/** Odds of each rarity on a banner, as whole percentages of the d100. */
-export function bannerOdds(banner: Banner): Record<number, number> {
-  return {
-    3: banner.t3,
-    4: banner.t4 - banner.t3,
-    5: 100 - banner.t4,
-  }
-}
-
-/** Every unit still summonable on a banner: right banner, not already claimed, not retired. */
+/** Every asset still summonable on a banner: right banner, not already claimed, not retired. */
 export function availableUnits(
   catalog: readonly Unit[],
   bannerId: number,
@@ -63,39 +52,29 @@ export function availableByRarity(
 }
 
 /**
- * When the rolled rarity has nothing left, step outward rather than failing the draw:
- * down first (a 5★ roll on an empty 5★ pool pays out a 4★), then up.
+ * One draw. The roll is the actual selection mechanism rather than decoration: face N of a
+ * d(poolSize) takes the Nth remaining asset, so the number shown on screen is exactly what
+ * decided the result.
  */
-function tierFallbackOrder(tier: number): number[] {
-  return [tier, tier - 1, tier - 2, tier + 1, tier + 2].filter((t) => t >= 3 && t <= 5)
-}
-
-/** One draw. Returns null only when the whole banner is empty. */
 export function drawOne(
   catalog: readonly Unit[],
-  banner: Banner,
+  bannerId: number,
   takenIds: ReadonlySet<number>,
 ): DrawResult | null {
-  const roll = rollD100()
-  const rolledTier = tierForRoll(roll, banner)
-  const pool = availableUnits(catalog, banner.id, takenIds)
+  const pool = availableUnits(catalog, bannerId, takenIds)
+  if (!pool.length) return null
 
-  for (const tier of tierFallbackOrder(rolledTier)) {
-    const candidates = pool.filter((u) => u.rarity === tier)
-    if (candidates.length) {
-      return { unit: pick(candidates), roll, rolledTier, tier }
-    }
-  }
-  return null
+  const roll = rollDie(pool.length)
+  return { unit: pool[roll - 1], roll, poolSize: pool.length }
 }
 
 /**
  * `count` draws in one go (1-5). Each result is reserved before the next roll, so a single
- * batch can never hand out the same unit twice.
+ * batch can never hand out the same asset twice — and the die shrinks by one each time.
  */
 export function summonMany(
   catalog: readonly Unit[],
-  banner: Banner,
+  bannerId: number,
   takenIds: ReadonlySet<number>,
   count: number,
 ): SummonOutcome {
@@ -104,7 +83,7 @@ export function summonMany(
   const draws = Math.max(MIN_PULLS, Math.min(MAX_PULLS, Math.floor(count)))
 
   for (let i = 0; i < draws; i++) {
-    const result = drawOne(catalog, banner, reserved)
+    const result = drawOne(catalog, bannerId, reserved)
     if (!result) return { results, exhausted: true }
     reserved.add(result.unit.id)
     results.push(result)
@@ -112,13 +91,16 @@ export function summonMany(
   return { results, exhausted: false }
 }
 
-/** Classes not yet assigned to any player. */
-export function availableClasses(all: readonly string[], players: readonly { className: string | null }[]): string[] {
+/** Classes not yet assigned to any contender. */
+export function availableClasses(
+  all: readonly string[],
+  players: readonly { className: string | null }[],
+): string[] {
   const taken = new Set(players.map((p) => p.className).filter((c): c is string => !!c))
   return all.filter((c) => !taken.has(c))
 }
 
 /** One class draw. Returns null when every class is spoken for. */
 export function drawClassFrom(pool: readonly string[]): string | null {
-  return pool.length ? pick(pool) : null
+  return pool.length ? pool[rollDie(pool.length) - 1] : null
 }

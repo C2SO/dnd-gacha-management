@@ -84,7 +84,7 @@ watch(
         class="name"
         type="text"
         :value="player.name"
-        :aria-label="`Runner name`"
+        :aria-label="`Contender name`"
         maxlength="28"
         @input="emit('rename', ($event.target as HTMLInputElement).value)"
       />

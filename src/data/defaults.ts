@@ -22,21 +22,32 @@ export const DND_CLASSES = [
 ]
 
 /**
- * d100 thresholds carried over from the original terminal: each banner up the chain trades
- * common stock for legendary odds. Editable in the Session tab and stored in the save file.
+ * Broadcast slots the sponsors buy into. Under Even Odds they carry no weighting — a banner
+ * is just which slate of assets is on offer. Names are editable in the Session tab.
  */
 export const DEFAULT_BANNERS: Banner[] = [
-  { id: 1, name: 'Cold Boot — Street Grid', t3: 57, t4: 87 },
-  { id: 2, name: 'Power Surge — Corpo Tier', t3: 50, t4: 80 },
-  { id: 3, name: 'Black Ice — Legend Protocol', t3: 40, t4: 73 },
+  { id: 1, name: 'Opening Slate' },
+  { id: 2, name: 'Prime Slot' },
+  { id: 3, name: 'Headline Slot' },
 ]
 
 export const DEFAULT_PLAYER_COUNT = 4
 export const MAX_PLAYERS = DND_CLASSES.length
 
 export function createPlayer(name: string) {
-  return { id: createId('runner'), name, className: null }
+  return { id: createId('contender'), name, className: null }
 }
+
+/** Sponsor spots shown in the footer ticker. Pure flavour. */
+export const SPONSOR_SLOGANS = [
+  'EVEN ODDS™ — every asset equally likely. Audited by the Thunderdome Commission.',
+  'No weighting. No favourites. No thumb on the scale. Just the die.',
+  'Your sponsor thanks you for your continued participation.',
+  'One die, one face per asset. Simple enough for the cheap seats.',
+  'Ask your sponsor about post-match survivorship coverage.',
+  'The Thunderdome: where everyone gets a fair shot at getting hit.',
+  'Brand visibility you can bleed for.',
+]
 
 export function buildDefaultSession(): SessionFile {
   return {
@@ -48,15 +59,15 @@ export function buildDefaultSession(): SessionFile {
       banners: DEFAULT_BANNERS.map((b) => ({ ...b })),
     },
     catalog: BUNDLED_CATALOG.map((u) => ({ ...u })),
-    players: Array.from({ length: DEFAULT_PLAYER_COUNT }, (_, i) => createPlayer(`Runner ${i + 1}`)),
+    players: Array.from({ length: DEFAULT_PLAYER_COUNT }, (_, i) => createPlayer(`Contender ${i + 1}`)),
     draws: [],
   }
 }
 
 /**
  * Banners present in the catalog but absent from settings still need somewhere to live, so a
- * CSV that introduces "Banner 4" does not silently hide its units.
+ * CSV that introduces "Banner 4" does not silently hide its assets.
  */
 export function bannerFallback(id: number): Banner {
-  return { id, name: `Banner ${id}`, t3: 57, t4: 87 }
+  return { id, name: `Slot ${id}` }
 }

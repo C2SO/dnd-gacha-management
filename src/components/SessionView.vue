@@ -7,7 +7,6 @@ import {
   importSessionJson,
   readFileAsText,
 } from '../composables/useSessionFile'
-import { bannerOdds } from '../utils/drawEngine'
 
 const session = useSession()
 const { state } = session
@@ -43,7 +42,7 @@ async function onJsonPicked(event: Event) {
       tone: result.warnings.length ? 'warn' : 'ok',
       title: `Loaded ${file.name}`,
       lines: [
-        `${result.session.players.length} runners · ${result.session.draws.length} draws · ${result.session.catalog.length} units`,
+        `${result.session.players.length} contenders · ${result.session.draws.length} draws · ${result.session.catalog.length} units`,
         ...result.warnings,
       ],
     }
@@ -95,14 +94,16 @@ function exportNow() {
 function doReset() {
   session.resetSession()
   confirmingReset.value = false
-  report.value = { tone: 'ok', title: 'Session reset', lines: ['Classes and draws cleared. Runners and catalog kept.'] }
+  report.value = { tone: 'ok', title: 'Session reset', lines: ['Classes and draws cleared. Contenders and catalog kept.'] }
 }
 
-function clampThresholds(id: number) {
-  const banner = state.settings.banners.find((b) => b.id === id)
-  if (!banner) return
-  banner.t3 = Math.min(100, Math.max(0, Math.round(banner.t3 || 0)))
-  banner.t4 = Math.min(100, Math.max(banner.t3, Math.round(banner.t4 || 0)))
+function slotStock(bannerId: number) {
+  return session.stockFor(bannerId)
+}
+
+function slotEvens(bannerId: number): string {
+  const left = session.remainingOn(bannerId)
+  return left ? `${left} left · 1 in ${left} each` : 'Sold out'
 }
 </script>
 
@@ -111,8 +112,8 @@ function clampThresholds(id: number) {
     <header class="head">
       <h2 class="section-title">Session</h2>
       <p class="section-sub">
-        Everything lives in this browser. Export writes one JSON file with the catalog, runners,
-        banners and the full ledger — import it anywhere to pick the session back up.
+        Everything lives in this browser. Export writes one JSON file with the catalog, contenders,
+        slots and the full ledger — import it anywhere to pick the session back up.
       </p>
     </header>
 
@@ -122,7 +123,7 @@ function clampThresholds(id: number) {
         <dl class="stats">
           <div><dt class="label">Units</dt><dd class="mono">{{ stats.units }}</dd></div>
           <div><dt class="label">Retired</dt><dd class="mono">{{ stats.retired }}</dd></div>
-          <div><dt class="label">Runners</dt><dd class="mono">{{ stats.players }}</dd></div>
+          <div><dt class="label">Contenders</dt><dd class="mono">{{ stats.players }}</dd></div>
           <div><dt class="label">Draws</dt><dd class="mono">{{ stats.draws }}</dd></div>
         </dl>
 
@@ -134,11 +135,11 @@ function clampThresholds(id: number) {
       </div>
 
       <div class="panel block">
-        <h3 class="block-title">Characters</h3>
+        <h3 class="block-title">Sponsored assets</h3>
         <p class="hint">
           The catalog is built from <code>data/characters.csv</code>. Load an updated CSV here to
           refresh stats mid-session — IDs keep their identity and nobody loses what they already
-          summoned.
+          drew.
         </p>
         <div class="stack">
           <button class="btn" type="button" @click="csvInput?.click()">Import characters CSV</button>
@@ -148,7 +149,7 @@ function clampThresholds(id: number) {
 
       <div class="panel block danger">
         <h3 class="block-title">Reset</h3>
-        <p class="hint">Clears drawn classes and the whole ledger. Runner names and the catalog stay.</p>
+        <p class="hint">Clears drawn classes and the whole ledger. Contender names and the catalog stay.</p>
         <div class="stack">
           <button v-if="!confirmingReset" class="btn btn-danger" type="button" @click="confirmingReset = true">
             Reset session
@@ -172,43 +173,23 @@ function clampThresholds(id: number) {
     </div>
 
     <div class="panel block wide">
-      <h3 class="block-title">Banners &amp; odds</h3>
+      <h3 class="block-title">Broadcast slots</h3>
       <p class="hint">
-        A d100 is rolled per draw: at or below the 3★ threshold gives 3★, at or below the 4★
-        threshold gives 4★, anything above is 5★.
+        Under Even Odds rules there is nothing to weight: a draw is one die with a face per asset
+        still in the slot, so every asset is equally likely and rarity is descriptive only. All
+        you can set is what each slot is called.
       </p>
 
       <div class="banner-grid">
         <div v-for="banner in state.settings.banners" :key="banner.id" class="banner">
-          <span class="label">Banner {{ banner.id }}</span>
-          <input v-model="banner.name" type="text" :aria-label="`Banner ${banner.id} name`" />
-          <div class="thresholds">
-            <label>
-              <span class="label">3★ ≤</span>
-              <input
-                v-model.number="banner.t3"
-                type="number"
-                min="0"
-                max="100"
-                @change="clampThresholds(banner.id)"
-              />
-            </label>
-            <label>
-              <span class="label">4★ ≤</span>
-              <input
-                v-model.number="banner.t4"
-                type="number"
-                min="0"
-                max="100"
-                @change="clampThresholds(banner.id)"
-              />
-            </label>
-          </div>
+          <span class="label">Slot {{ banner.id }}</span>
+          <input v-model="banner.name" type="text" :aria-label="`Slot ${banner.id} name`" />
           <div class="odds mono">
-            <span class="r3">{{ bannerOdds(banner)[3] }}%</span>
-            <span class="r4">{{ bannerOdds(banner)[4] }}%</span>
-            <span class="r5">{{ bannerOdds(banner)[5] }}%</span>
+            <span class="r3">{{ slotStock(banner.id)[3] }}×3★</span>
+            <span class="r4">{{ slotStock(banner.id)[4] }}×4★</span>
+            <span class="r5">{{ slotStock(banner.id)[5] }}×5★</span>
           </div>
+          <span class="label evens">{{ slotEvens(banner.id) }}</span>
         </div>
       </div>
     </div>

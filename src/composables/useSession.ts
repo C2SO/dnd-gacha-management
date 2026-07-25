@@ -107,22 +107,26 @@ export function migrate(input: SessionFile): SessionFile {
     savedAt: input.savedAt ?? base.savedAt,
     settings: {
       classes: input.settings?.classes?.length ? input.settings.classes : base.settings.classes,
-      banners: input.settings?.banners?.length ? input.settings.banners : base.settings.banners,
+      // Strip any leftover v1 rarity thresholds; banners now carry nothing but a name.
+      banners: (input.settings?.banners?.length ? input.settings.banners : base.settings.banners).map(
+        (b) => ({ id: b.id, name: b.name }),
+      ),
     },
     catalog: input.catalog?.length ? input.catalog : base.catalog,
     players: (input.players ?? []).map((p) => ({
-      id: p.id ?? createPlayer(p.name ?? 'Runner').id,
-      name: p.name ?? 'Runner',
+      id: p.id ?? createPlayer(p.name ?? 'Contender').id,
+      name: p.name ?? 'Contender',
       className: p.className ?? null,
     })),
+    // v1 draws carried `tier`/`shiftedFrom` from the old weighted d100 and no `poolSize`;
+    // rarity now comes from the catalog, and a missing pool size just reads as unknown.
     draws: (input.draws ?? []).map((d, i) => ({
       seq: d.seq ?? i + 1,
       unitId: d.unitId,
       playerId: d.playerId,
       bannerId: d.bannerId,
       roll: d.roll ?? 0,
-      tier: d.tier ?? 3,
-      shiftedFrom: d.shiftedFrom ?? null,
+      poolSize: d.poolSize ?? 0,
       at: d.at ?? new Date().toISOString(),
     })),
   }
@@ -174,7 +178,7 @@ export function useSession() {
 
   function addPlayer(): Player | null {
     if (state.players.length >= MAX_PLAYERS) return null
-    const player = createPlayer(`Runner ${state.players.length + 1}`)
+    const player = createPlayer(`Contender ${state.players.length + 1}`)
     state.players.push(player)
     return player
   }
@@ -233,7 +237,7 @@ export function useSession() {
       return { results: [], exhausted: true, draws: [] as Draw[] }
     }
 
-    const outcome = summonMany(state.catalog, banner, takenUnitIds.value, count)
+    const outcome = summonMany(state.catalog, banner.id, takenUnitIds.value, count)
     const at = new Date().toISOString()
     let seq = state.draws.reduce((max, d) => Math.max(max, d.seq), 0)
 
@@ -243,8 +247,7 @@ export function useSession() {
       playerId,
       bannerId,
       roll: result.roll,
-      tier: result.tier,
-      shiftedFrom: result.tier === result.rolledTier ? null : result.rolledTier,
+      poolSize: result.poolSize,
       at,
     }))
 

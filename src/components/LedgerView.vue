@@ -12,13 +12,16 @@ const rows = computed(() =>
   [...state.draws].sort((a, b) => b.seq - a.seq).map(decorate),
 )
 
+// Rarity is read from the catalog rather than stored on the draw, so a CSV that re-grades a
+// character is reflected retroactively and there is only one source of truth.
 function decorate(draw: Draw) {
   const unit = session.unitById.value.get(draw.unitId)
   return {
     draw,
     unit,
-    playerName: session.playerById.value.get(draw.playerId)?.name ?? 'Unknown runner',
-    name: unit?.name ?? `Unit #${draw.unitId}`,
+    rarity: unit?.rarity ?? 0,
+    playerName: session.playerById.value.get(draw.playerId)?.name ?? 'Unknown contender',
+    name: unit?.name ?? `Asset #${draw.unitId}`,
     game: unit?.game ?? '',
     role: unit?.role ?? '',
     time: new Date(draw.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
@@ -29,14 +32,14 @@ const byPlayer = computed(() =>
   state.players.map((player) => {
     const draws = (session.drawsByPlayer.value.get(player.id) ?? []).map(decorate)
     const counts: Record<number, number> = { 3: 0, 4: 0, 5: 0 }
-    for (const row of draws) counts[row.draw.tier]++
+    for (const row of draws) counts[row.rarity] = (counts[row.rarity] ?? 0) + 1
     return { player, draws, counts }
   }),
 )
 
 const totals = computed(() => {
   const counts: Record<number, number> = { 3: 0, 4: 0, 5: 0 }
-  for (const draw of state.draws) counts[draw.tier]++
+  for (const row of rows.value) counts[row.rarity] = (counts[row.rarity] ?? 0) + 1
   return counts
 })
 </script>
@@ -46,7 +49,9 @@ const totals = computed(() => {
     <header class="head">
       <div>
         <h2 class="section-title">Ledger</h2>
-        <p class="section-sub">Every draw this session, in order. Pulled operatives never return to the pool.</p>
+        <p class="section-sub">
+          Every draw this session, in order. A sponsored asset never returns to the pool.
+        </p>
       </div>
       <div class="right">
         <div class="totals mono">
@@ -55,24 +60,24 @@ const totals = computed(() => {
           <span class="r3">{{ totals[3] }}×3★</span>
         </div>
         <button class="btn btn-sm" type="button" @click="grouped = !grouped">
-          {{ grouped ? 'Show chronological' : 'Group by runner' }}
+          {{ grouped ? 'Show chronological' : 'Group by contender' }}
         </button>
       </div>
     </header>
 
-    <p v-if="!state.draws.length" class="empty label">Nothing summoned yet.</p>
+    <p v-if="!state.draws.length" class="empty label">No sponsors have drawn yet.</p>
 
     <div v-else-if="!grouped" class="scroll-x panel">
       <table>
         <thead>
           <tr>
             <th>#</th>
-            <th>Runner</th>
-            <th>Operative</th>
+            <th>Contender</th>
+            <th>Asset</th>
             <th>Rarity</th>
             <th>Role</th>
-            <th>Banner</th>
-            <th>d100</th>
+            <th>Slot</th>
+            <th>Draw</th>
             <th>Time</th>
           </tr>
         </thead>
@@ -84,12 +89,12 @@ const totals = computed(() => {
               {{ row.name }}
               <span v-if="row.game" class="sub label">{{ row.game }}</span>
             </td>
-            <td class="mono" :class="`r${row.draw.tier}`">{{ '★'.repeat(row.draw.tier) }}</td>
+            <td class="mono" :class="`r${row.rarity}`">{{ '★'.repeat(row.rarity) }}</td>
             <td class="dim">{{ row.role }}</td>
             <td class="mono">{{ row.draw.bannerId }}</td>
             <td class="mono">
               {{ row.draw.roll }}
-              <span v-if="row.draw.shiftedFrom" class="sub label">from {{ row.draw.shiftedFrom }}★</span>
+              <span v-if="row.draw.poolSize" class="sub label">of {{ row.draw.poolSize }}</span>
             </td>
             <td class="mono dim">{{ row.time }}</td>
           </tr>
@@ -112,8 +117,10 @@ const totals = computed(() => {
           <li v-for="row in group.draws" :key="row.draw.seq">
             <span class="mono seq">{{ row.draw.seq }}</span>
             <span class="who">{{ row.name }}</span>
-            <span class="mono" :class="`r${row.draw.tier}`">{{ '★'.repeat(row.draw.tier) }}</span>
-            <span class="label dim">B{{ row.draw.bannerId }} · d100 {{ row.draw.roll }}</span>
+            <span class="mono" :class="`r${row.rarity}`">{{ '★'.repeat(row.rarity) }}</span>
+            <span class="label dim">
+              Slot {{ row.draw.bannerId }} · rolled {{ row.draw.roll }}<template v-if="row.draw.poolSize"> of {{ row.draw.poolSize }}</template>
+            </span>
           </li>
         </ul>
         <p v-else class="label dim none">No draws yet.</p>
