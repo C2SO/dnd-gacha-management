@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Front-end only manager for a cyberpunk D&D one-shot: class draft, gacha summons, codex and ledger.",
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "catalog": "node scripts/build-catalog.mjs",
     "dev": "npm run catalog && vite",

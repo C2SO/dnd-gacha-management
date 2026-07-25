@@ -2,7 +2,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    # This repo's default branch is currently the claude/... branch; `main` is listed too so
+    # the deploy keeps working if the work is later merged into a main branch.
+    branches: [main, 'claude/dnd-session-manager-vue-5myc6h']
   workflow_dispatch:
 
 # Allow the workflow to publish to Pages, but never to write to the repository itself.
@@ -22,9 +24,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Node 22.18+ required: scripts/build-catalog.mjs imports the app's TypeScript parser
+      # directly and relies on Node's built-in type stripping.
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - run: npm ci

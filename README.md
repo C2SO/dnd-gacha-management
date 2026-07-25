@@ -20,14 +20,6 @@ session lives in the browser and travels as a single JSON file.
 
 There is no pity system, no reroll card, and no auto-rolled HP — HP comes from the CSV.
 
-## Running it locally
-
-```bash
-npm install
-npm run dev      # http://localhost:5173
-npm run build    # production build into dist/
-npm run preview  # serve the production build
-```
 
 ## Character data
 
@@ -119,12 +111,32 @@ where storage is blocked the chip warns that only exports will persist.
 
 Banner thresholds are read as: `d100 ≤ t3` → 3★, `≤ t4` → 4★, above → 5★.
 
+## Running it locally
+
+Requires **Node 22.18 or newer** — the catalog build step imports the app's TypeScript parser
+directly and relies on Node's built-in type stripping.
+
+```bash
+npm install
+npm run dev      # http://localhost:5173/dnd-gacha-management/
+npm run build    # production build into dist/
+npm run preview  # serve the production build
+```
+
 ## Deploying
 
-Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds and publishes to GitHub
-Pages.
+`.github/workflows/deploy.yml` builds and publishes to GitHub Pages on every push to the default
+branch (or on demand from the Actions tab → *Deploy to GitHub Pages* → *Run workflow*).
 
-**One-time setup:** repo *Settings → Pages → Build and deployment → Source = **GitHub Actions***.
+**One-time setup:**
+
+1. **The repository must be public**, unless the account has GitHub Pro/Team/Enterprise — Pages
+   for private repositories is a paid feature. *Settings → General → Danger Zone → Change
+   visibility.*
+2. *Settings → Pages → Build and deployment → Source = **GitHub Actions***.
+3. Push, or trigger the workflow manually. The first run takes about a minute.
+
+The site is then served at `https://<user>.github.io/dnd-gacha-management/`.
 
 If you fork this or rename the repo, update `base` in `vite.config.ts` to match the new repo name
 or the assets will 404.
