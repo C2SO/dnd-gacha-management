@@ -1,0 +1,29 @@
+{
+  "name": "dnd-gacha-management",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Front-end only manager for a cyberpunk D&D one-shot: class draft, gacha summons, codex and ledger.",
+  "scripts": {
+    "catalog": "node scripts/build-catalog.mjs",
+    "dev": "npm run catalog && vite",
+    "prebuild": "npm run catalog",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/orbitron": "^5.3.0",
+    "@fontsource/rajdhani": "^5.3.0",
+    "@types/papaparse": "^5.5.2",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "papaparse": "^5.4.1",
+    "typescript": "~5.7.2",
+    "vite": "^6.0.7",
+    "vue-tsc": "^3.3.8"
+  }
+}

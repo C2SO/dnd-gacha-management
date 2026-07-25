@@ -1,0 +1,338 @@
+/* ============================================================================
+   Design tokens. Components reference these only — no raw colour literals in
+   component styles, so the whole terminal can be re-tinted from one place.
+   ========================================================================= */
+:root {
+  --bg: #05070d;
+  --bg-raised: #080c15;
+  --panel: #0b1018;
+  --panel-2: #0e1520;
+  --line: #1b2534;
+  --line-bright: #24344a;
+
+  --text: #dce8f5;
+  --text-dim: #7d93ab;
+  --text-faint: #55697f;
+
+  --cyan: #00e5ff;
+  --cyan-deep: #0891a3;
+  --magenta: #ff2e88;
+  --acid: #c6ff00;
+  --amber: #ffb100;
+
+  --r3: #7d8fa8;
+  --r4: #a855f7;
+  --r5: #ffb100;
+
+  --ok: #26e0a5;
+  --warn: #ffb100;
+  --danger: #ff4d6d;
+
+  --display: 'Orbitron', 'Rajdhani', sans-serif;
+  --ui: 'Rajdhani', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+
+  --notch: 10px;
+  --shell-max: 1240px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Ambient backdrop: corner glows, a faint engineering grid, and scanlines. Purely
+   decorative and non-interactive. */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  background:
+    radial-gradient(60rem 40rem at 12% -10%, rgba(0, 229, 255, 0.13), transparent 65%),
+    radial-gradient(50rem 36rem at 92% 4%, rgba(255, 46, 136, 0.11), transparent 62%),
+    radial-gradient(70rem 50rem at 50% 120%, rgba(168, 85, 247, 0.09), transparent 70%);
+}
+
+body::after {
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.028) 1px, transparent 1px),
+    repeating-linear-gradient(rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px);
+  background-size:
+    64px 64px,
+    64px 64px,
+    100% 3px;
+  mask-image: radial-gradient(120% 100% at 50% 0%, #000 35%, transparent 92%);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--cyan);
+}
+
+::selection {
+  background: var(--cyan);
+  color: var(--bg);
+}
+
+/* ---------- shared primitives ---------- */
+
+.label {
+  font-family: var(--mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel {
+  position: relative;
+  background: linear-gradient(160deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--line);
+  clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch)
+  );
+}
+
+.section-title {
+  font-family: var(--display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.section-sub {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-top: var(--sp-2);
+}
+
+.btn {
+  --btn-accent: var(--cyan);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--line-bright);
+  padding: 0.7rem 1.1rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.btn:hover:not(:disabled) {
+  color: var(--btn-accent);
+  border-color: var(--btn-accent);
+  box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.12);
+}
+
+.btn:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  color: var(--bg);
+  background: linear-gradient(120deg, var(--cyan), #6ff2ff);
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 0 24px -8px rgba(0, 229, 255, 0.85);
+}
+
+.btn-primary:hover:not(:disabled) {
+  color: var(--bg);
+  background: linear-gradient(120deg, #6ff2ff, var(--cyan));
+  box-shadow: 0 0 30px -6px rgba(0, 229, 255, 0.95);
+}
+
+.btn-danger {
+  --btn-accent: var(--danger);
+}
+
+.btn-sm {
+  font-size: 0.62rem;
+  padding: 0.5rem 0.8rem;
+}
+
+input,
+select,
+textarea {
+  font-family: var(--ui);
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--bg-raised);
+  border: 1px solid var(--line-bright);
+  border-radius: 0;
+  padding: 0.55rem 0.7rem;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--cyan);
+  outline: none;
+}
+
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%),
+    linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 50%,
+    calc(100% - 11px) 50%;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.stars {
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
+}
+
+.r3 {
+  color: var(--r3);
+}
+.r4 {
+  color: var(--r4);
+}
+.r5 {
+  color: var(--r5);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid currentColor;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-raised);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-bright);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cyan-deep);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
