@@ -3,8 +3,8 @@ import { computed, ref, watch } from 'vue'
 import UnitCard from './UnitCard.vue'
 import ResultCard from './ResultCard.vue'
 import LegendaryFlash from './LegendaryFlash.vue'
+import UnitDetailModal from './UnitDetailModal.vue'
 import { useSession } from '../composables/useSession'
-import type { Unit } from '../types'
 import { MAX_PULLS, type DrawResult } from '../utils/drawEngine'
 
 const session = useSession()
@@ -17,7 +17,7 @@ const results = ref<DrawResult[]>([])
 const notes = ref<string[]>([])
 /** Compact by default so a full batch fits on a laptop screen without scrolling. */
 const detailed = ref(false)
-const expanded = ref<Unit | null>(null)
+const expanded = ref<DrawResult | null>(null)
 const flash = ref<{ key: number; names: string[] } | null>(null)
 
 // Keep the selects pointing at something real after an import or a roster edit.
@@ -182,7 +182,7 @@ function summon() {
               :roll="r.roll"
               :pool-size="r.poolSize"
               :index="i"
-              @open="expanded = r.unit"
+              @open="expanded = r"
             />
           </template>
         </div>
@@ -194,12 +194,13 @@ function summon() {
       </div>
     </div>
 
-    <div v-if="expanded" class="overlay" @click.self="expanded = null">
-      <div class="detail" role="dialog" aria-modal="true" :aria-label="expanded.name">
-        <button class="close btn btn-sm" type="button" @click="expanded = null">Close</button>
-        <UnitCard :unit="expanded" />
-      </div>
-    </div>
+    <UnitDetailModal
+      v-if="expanded"
+      :unit="expanded.unit"
+      :roll="expanded.roll"
+      :pool-size="expanded.poolSize"
+      @close="expanded = null"
+    />
 
     <LegendaryFlash v-if="flash" :key="flash.key" :names="flash.names" @done="flash = null" />
   </section>
@@ -362,28 +363,6 @@ function summon() {
   margin-left: auto;
 }
 
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  background: rgba(3, 5, 10, 0.82);
-  backdrop-filter: blur(3px);
-  display: grid;
-  place-items: start center;
-  padding: var(--sp-4);
-  overflow-y: auto;
-}
-
-.detail {
-  width: min(30rem, 100%);
-  display: grid;
-  gap: var(--sp-2);
-  justify-items: end;
-}
-
-.close {
-  background: var(--panel);
-}
 
 .empty {
   border: 1px dashed var(--line-bright);

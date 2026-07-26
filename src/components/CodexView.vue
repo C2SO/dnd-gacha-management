@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import UnitCard from './UnitCard.vue'
+import { computed, ref } from 'vue'
+import UnitDetailModal from './UnitDetailModal.vue'
 import { useSession } from '../composables/useSession'
 import type { Unit } from '../types'
 
@@ -80,13 +80,6 @@ function reset() {
   roleFilter.value = 'all'
   statusFilter.value = 'all'
 }
-
-function onKey(event: KeyboardEvent) {
-  if (event.key === 'Escape') selected.value = null
-}
-
-onMounted(() => window.addEventListener('keydown', onKey))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
 
 <template>
@@ -182,12 +175,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
     <p v-if="!filtered.length" class="empty label">No assets match those filters.</p>
 
-    <div v-if="selected" class="overlay" @click.self="selected = null">
-      <div class="detail" role="dialog" aria-modal="true" :aria-label="selected.name">
-        <button class="close btn btn-sm" type="button" @click="selected = null">Close</button>
-        <UnitCard :unit="selected" :claimed-by="session.claimedBy.value.get(selected.id)?.name ?? null" />
-      </div>
-    </div>
+    <UnitDetailModal
+      v-if="selected"
+      :unit="selected"
+      :claimed-by="session.claimedBy.value.get(selected.id)?.name ?? null"
+      @close="selected = null"
+    />
   </section>
 </template>
 
@@ -354,26 +347,4 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   margin-top: var(--sp-3);
 }
 
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  background: rgba(3, 5, 10, 0.82);
-  backdrop-filter: blur(3px);
-  display: grid;
-  place-items: start center;
-  padding: var(--sp-4);
-  overflow-y: auto;
-}
-
-.detail {
-  width: min(30rem, 100%);
-  display: grid;
-  gap: var(--sp-2);
-  justify-items: end;
-}
-
-.close {
-  background: var(--panel);
-}
 </style>

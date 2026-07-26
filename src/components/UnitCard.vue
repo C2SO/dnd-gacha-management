@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import type { Unit } from '../types'
 import { ABILITIES } from '../types'
+import { abilityBlocks, attackProfile, damageLine, monogramFor } from '../utils/unitPresentation'
 
 const props = withDefaults(
   defineProps<{
@@ -25,43 +26,10 @@ watch(
   },
 )
 
-const monogram = computed(() => props.unit.name.trim().charAt(0).toUpperCase() || '?')
-
-/** Compact mechanical line assembled from the decomposed CSV columns. */
-const profile = computed(() =>
-  [props.unit.attackKind, props.unit.attackAbility, props.unit.attackRange, props.unit.attackTargets]
-    .filter(Boolean)
-    .join(' · '),
-)
-
-const damageLine = computed(() => {
-  const parts: string[] = []
-  if (props.unit.damage) parts.push([props.unit.damage, props.unit.damageType].filter(Boolean).join(' '))
-  if (props.unit.bonusDamage) {
-    parts.push(`+ ${[props.unit.bonusDamage, props.unit.bonusDamageType].filter(Boolean).join(' ')}`)
-  }
-  return parts.join(' ')
-})
-
-/** Splits "Name (Recharge 5-6): text" so the ability name can be emphasised. */
-function splitAbility(text: string): { head: string; body: string } {
-  const match = /^([^:]{2,90}?):\s*([\s\S]+)$/.exec(text.trim())
-  return match ? { head: match[1].trim(), body: match[2].trim() } : { head: '', body: text.trim() }
-}
-
-const blocks = computed(() => {
-  const out: { label: string; head: string; body: string; feature?: boolean }[] = []
-  const u = props.unit
-
-  if (u.attack) out.push({ label: 'Attack', ...splitAbility(u.attack) })
-  if (u.baselineText) out.push({ label: u.baselineName || 'Baseline', head: '', body: u.baselineText })
-  if (u.healing) out.push({ label: 'Healing', ...splitAbility(u.healing) })
-  if (u.special) out.push({ label: 'Special', ...splitAbility(u.special) })
-  if (u.capstoneText) {
-    out.push({ label: u.capstoneType || 'Capstone', ...splitAbility(u.capstoneText), feature: true })
-  }
-  return out
-})
+const monogram = computed(() => monogramFor(props.unit))
+const profile = computed(() => attackProfile(props.unit))
+const damage = computed(() => damageLine(props.unit))
+const blocks = computed(() => abilityBlocks(props.unit))
 
 const proficient = computed(() => new Set(props.unit.saveProficient))
 </script>
@@ -116,7 +84,7 @@ const proficient = computed(() => new Set(props.unit.saveProficient))
       <div class="stat">
         <div class="label">Attack</div>
         <div class="value mono">+{{ unit.attackBonus || '0' }}</div>
-        <div class="sub mono">{{ damageLine || '—' }}</div>
+        <div class="sub mono">{{ damage || '—' }}</div>
       </div>
     </div>
 

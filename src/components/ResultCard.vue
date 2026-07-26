@@ -19,6 +19,7 @@ const props = withDefaults(
 defineEmits<{ open: [] }>()
 
 const imageFailed = ref(false)
+const imageLoaded = ref(false)
 const monogram = computed(() => props.unit.name.trim().charAt(0).toUpperCase() || '?')
 </script>
 
@@ -32,15 +33,16 @@ const monogram = computed(() => props.unit.name.trim().charAt(0).toUpperCase() |
     @click="$emit('open')"
   >
     <span class="art">
+      <span v-if="!imageLoaded" class="monogram" aria-hidden="true">{{ monogram }}</span>
       <img
         v-if="unit.imageUrl && !imageFailed"
         :src="unit.imageUrl"
         alt=""
         loading="lazy"
         referrerpolicy="no-referrer"
+        @load="imageLoaded = true"
         @error="imageFailed = true"
       />
-      <span v-else class="monogram" aria-hidden="true">{{ monogram }}</span>
       <span class="roll mono">{{ roll }}<small>/{{ poolSize }}</small></span>
     </span>
 
@@ -111,7 +113,14 @@ const monogram = computed(() => props.unit.name.trim().charAt(0).toUpperCase() |
   overflow: hidden;
 }
 
+.art > .monogram {
+  grid-area: 1 / 1;
+}
+
+/* Pinned to the frame so the crop is always the frame's, never the image's intrinsic size. */
 .art img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
