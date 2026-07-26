@@ -103,8 +103,14 @@ watch(
       {{ display || 'Unassigned' }}
     </div>
 
-    <button class="btn btn-sm draw" type="button" :disabled="!canDraw && !player.className" @click="emit('draw')">
-      {{ player.className ? 'Redraw class' : 'Draw class' }}
+    <button
+      class="btn btn-sm draw"
+      type="button"
+      :disabled="!canDraw"
+      :title="player.className ? 'Burns the current class and deals the next one' : undefined"
+      @click="emit('draw')"
+    >
+      {{ player.className ? 'Burn & redraw' : 'Draw class' }}
     </button>
   </div>
 </template>

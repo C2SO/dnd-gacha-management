@@ -79,7 +79,7 @@ export function importSessionJson(text: string): JsonImportResult {
 
   const candidate = parsed as SessionFile
   if (candidate.format && candidate.format !== SESSION_FORMAT) {
-    return { ok: false, errors: [`Unrecognised file format "${candidate.format}".`], warnings }
+    return { ok: false, errors: [`Unrecognized file format "${candidate.format}".`], warnings }
   }
   if (typeof candidate.version === 'number' && candidate.version > SESSION_VERSION) {
     warnings.push(

@@ -1,5 +1,5 @@
 /* ============================================================================
-   Design tokens. Components reference these only — no raw colour literals in
+   Design tokens. Components reference these only — no raw color literals in
    component styles, so the whole terminal can be re-tinted from one place.
    ========================================================================= */
 :root {

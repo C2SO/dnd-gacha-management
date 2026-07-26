@@ -91,13 +91,13 @@ export function summonMany(
   return { results, exhausted: false }
 }
 
-/** Classes not yet assigned to any contender. */
-export function availableClasses(
-  all: readonly string[],
-  players: readonly { className: string | null }[],
-): string[] {
-  const taken = new Set(players.map((p) => p.className).filter((c): c is string => !!c))
-  return all.filter((c) => !taken.has(c))
+/**
+ * Classes still in the deck. Keyed on what has been *dealt*, not on what is currently held:
+ * a class a contender redrew away is spent and never comes back.
+ */
+export function availableClasses(all: readonly string[], dealt: readonly string[]): string[] {
+  const spent = new Set(dealt)
+  return all.filter((c) => !spent.has(c))
 }
 
 /** One class draw. Returns null when every class is spoken for. */

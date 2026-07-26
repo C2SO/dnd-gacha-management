@@ -191,7 +191,7 @@ export function parseCatalog(input: ArrayBuffer | Uint8Array | string): CatalogP
 
   const unknown = headers.filter((h) => h && !KNOWN_COLUMNS.includes(h as (typeof KNOWN_COLUMNS)[number]))
   if (unknown.length) {
-    warnings.push(`Ignored unrecognised column(s): ${unknown.join(', ')}.`)
+    warnings.push(`Ignored unrecognized column(s): ${unknown.join(', ')}.`)
   }
 
   if (errors.length) return { units: [], errors, warnings, encoding: decoded.encoding, repairedCells }
@@ -255,7 +255,7 @@ export function parseCatalog(input: ArrayBuffer | Uint8Array | string): CatalogP
       const ability = token.trim().toUpperCase()
       if (!ability) continue
       if ((ABILITIES as readonly string[]).includes(ability)) saveProficient.push(ability)
-      else warnings.push(`Row ${row} ("${name}"): unrecognised SaveProficient value "${token.trim()}".`)
+      else warnings.push(`Row ${row} ("${name}"): unrecognized SaveProficient value "${token.trim()}".`)
     }
 
     units.push({

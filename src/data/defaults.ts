@@ -38,10 +38,10 @@ export function createPlayer(name: string) {
   return { id: createId('contender'), name, className: null }
 }
 
-/** Sponsor spots shown in the footer ticker. Pure flavour. */
+/** Sponsor spots shown in the footer ticker. Pure flavor. */
 export const SPONSOR_SLOGANS = [
   'EVEN ODDS™ — every asset equally likely. Audited by the Thunderdome Commission.',
-  'No weighting. No favourites. No thumb on the scale. Just the die.',
+  'No weighting. No favorites. No thumb on the scale. Just the die.',
   'Your sponsor thanks you for your continued participation.',
   'One die, one face per asset. Simple enough for the cheap seats.',
   'Ask your sponsor about post-match survivorship coverage.',
@@ -61,6 +61,7 @@ export function buildDefaultSession(): SessionFile {
     catalog: BUNDLED_CATALOG.map((u) => ({ ...u })),
     players: Array.from({ length: DEFAULT_PLAYER_COUNT }, (_, i) => createPlayer(`Contender ${i + 1}`)),
     draws: [],
+    dealtClasses: [],
   }
 }
 

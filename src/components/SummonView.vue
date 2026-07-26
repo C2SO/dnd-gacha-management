@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import UnitCard from './UnitCard.vue'
+import ResultCard from './ResultCard.vue'
+import LegendaryFlash from './LegendaryFlash.vue'
 import { useSession } from '../composables/useSession'
+import type { Unit } from '../types'
 import { MAX_PULLS, type DrawResult } from '../utils/drawEngine'
 
 const session = useSession()
@@ -12,6 +15,10 @@ const bannerId = ref(session.banners.value[0]?.id ?? 1)
 const pullCount = ref(1)
 const results = ref<DrawResult[]>([])
 const notes = ref<string[]>([])
+/** Compact by default so a full batch fits on a laptop screen without scrolling. */
+const detailed = ref(false)
+const expanded = ref<Unit | null>(null)
+const flash = ref<{ key: number; names: string[] } | null>(null)
 
 // Keep the selects pointing at something real after an import or a roster edit.
 watch(
@@ -55,6 +62,12 @@ function summon() {
   const outcome = session.summon(playerId.value, bannerId.value, pullCount.value)
   results.value = outcome.results
   notes.value = []
+  expanded.value = null
+
+  const legendaries = outcome.results.filter((r) => r.unit.rarity === 5)
+  if (legendaries.length) {
+    flash.value = { key: Date.now(), names: legendaries.map((r) => r.unit.name) }
+  }
 
   if (outcome.exhausted) {
     notes.value.push(
@@ -141,21 +154,37 @@ function summon() {
               {{ tally[5] }}×5★ · {{ tally[4] }}×4★ · {{ tally[3] }}×3★
             </span>
             <span v-if="player" class="label who">for {{ player.name }}</span>
+            <button v-if="results.length" class="btn btn-sm toggle" type="button" @click="detailed = !detailed">
+              {{ detailed ? 'Compact' : 'Full stat blocks' }}
+            </button>
           </div>
           <ul v-if="notes.length" class="notes label">
             <li v-for="(note, i) in notes" :key="i">{{ note }}</li>
           </ul>
         </div>
 
-        <div v-if="results.length" class="cards">
-          <UnitCard
-            v-for="(r, i) in results"
-            :key="`${r.unit.id}-${i}`"
-            :unit="r.unit"
-            :roll="r.roll"
-            :pool-size="r.poolSize"
-            :index="i"
-          />
+        <div v-if="results.length" class="cards" :class="detailed ? 'full' : 'compact'">
+          <template v-if="detailed">
+            <UnitCard
+              v-for="(r, i) in results"
+              :key="`${r.unit.id}-${i}`"
+              :unit="r.unit"
+              :roll="r.roll"
+              :pool-size="r.poolSize"
+              :index="i"
+            />
+          </template>
+          <template v-else>
+            <ResultCard
+              v-for="(r, i) in results"
+              :key="`${r.unit.id}-${i}`"
+              :unit="r.unit"
+              :roll="r.roll"
+              :pool-size="r.poolSize"
+              :index="i"
+              @open="expanded = r.unit"
+            />
+          </template>
         </div>
 
         <div v-else-if="!notes.length" class="empty label">
@@ -164,6 +193,15 @@ function summon() {
         </div>
       </div>
     </div>
+
+    <div v-if="expanded" class="overlay" @click.self="expanded = null">
+      <div class="detail" role="dialog" aria-modal="true" :aria-label="expanded.name">
+        <button class="close btn btn-sm" type="button" @click="expanded = null">Close</button>
+        <UnitCard :unit="expanded" />
+      </div>
+    </div>
+
+    <LegendaryFlash v-if="flash" :key="flash.key" :names="flash.names" @done="flash = null" />
   </section>
 </template>
 
@@ -174,7 +212,7 @@ function summon() {
 
 .deck {
   display: grid;
-  grid-template-columns: 17rem 1fr;
+  grid-template-columns: 15rem 1fr;
   gap: var(--sp-5);
   align-items: start;
 }
@@ -303,9 +341,48 @@ function summon() {
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
   align-items: start;
+  gap: var(--sp-3);
+}
+
+/* Compact: a whole batch of five sits in one row on a laptop, no scrolling. */
+.cards.compact {
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  /* Stretch so a name that wraps to two lines does not leave the row ragged; each card's
+     stat strip is pinned to its own bottom edge. */
+  align-items: stretch;
+}
+
+.cards.full {
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
   gap: var(--sp-4);
+}
+
+.toggle {
+  margin-left: auto;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(3, 5, 10, 0.82);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: start center;
+  padding: var(--sp-4);
+  overflow-y: auto;
+}
+
+.detail {
+  width: min(30rem, 100%);
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: end;
+}
+
+.close {
+  background: var(--panel);
 }
 
 .empty {

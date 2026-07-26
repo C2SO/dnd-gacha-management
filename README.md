@@ -13,11 +13,14 @@ nothing to weight and nothing to configure.
 
 ## What it does
 
-- **Draft** — each contender draws a D&D class. A class is never handed out twice, and nobody
-  gets to pick.
+- **Draft** — classes are dealt from a deck. Redrawing burns the class you were holding and
+  deals the next one, so a class is never dealt twice and nobody gets to pick. The Draft screen
+  tracks how many are left and which have been burned.
 - **Summon** — pick a contender, a broadcast slot, and 1–5 draws. Each draw rolls a die with one
   face per remaining asset, so a 5★ is no rarer to draw than a 3★. Anything drawn leaves the slot
-  **for the whole arena**, so no asset is ever sponsored twice.
+  **for the whole arena**, so no asset is ever sponsored twice. Results land as compact cards that
+  fit a full batch of five on one laptop screen — click any card, or hit *Full stat blocks*, for
+  the complete sheet. A 5★ gets its own reveal.
 - **Codex** — every asset on file, filterable by sponsor, slot, rarity, role and status, showing
   what is still up for draw and who holds the rest.
 - **Ledger** — the full draw history, chronologically or grouped per contender.
@@ -25,6 +28,13 @@ nothing to weight and nothing to configure.
 
 There is no pity system, no reroll card, no rarity weighting, and no auto-rolled HP — HP comes
 from the CSV.
+
+### Classes are a deck, not a hat
+
+There are 12 classes and they are dealt, not drawn-and-replaced. Four contenders leave 8 in the
+deck; every redraw spends one more. A burned class is gone for the rest of the session — it is
+listed on the Draft screen with a strikethrough so you can see where the deck went. *Clear
+classes* shuffles everything back together and starts the draft over.
 
 ### A note on rarity
 
@@ -83,10 +93,10 @@ optional and renders only when present.
 | `Attack`, `BaselineName`, `BaselineText`, `Healing`, `Special`, `CapstoneType`, `CapstoneText` | Ability blocks. Empty ones are hidden. |
 | `ImageURL` | Portrait. If the image fails to load, a monogram is shown instead. |
 
-Unrecognised columns are ignored (with a note), so extra columns for your own notes are safe.
+Unrecognized columns are ignored (with a note), so extra columns for your own notes are safe.
 
 The importer detects the file's encoding: strict UTF-8 first, falling back to windows-1252, which
-is what Excel usually writes. It also repairs the classic double-encoding artefact (`SÃ£o` →
+is what Excel usually writes. It also repairs the classic double-encoding artifact (`SÃ£o` →
 `São`) and reports every cell it touched.
 
 ## The save file
@@ -99,7 +109,7 @@ where storage is blocked the chip warns that only exports will persist.
 ```jsonc
 {
   "format": "dnd-gacha-session",
-  "version": 2,
+  "version": 3,
   "savedAt": "2026-07-25T21:00:00.000Z",
   "settings": {
     "classes": ["Barbarian", "..."],
@@ -107,6 +117,7 @@ where storage is blocked the chip warns that only exports will persist.
   },
   "catalog": [{ "id": 1, "name": "Rawiyah", "bannerId": 1, "rarity": 3, "...": "..." }],
   "players": [{ "id": "contender-…", "name": "Contender 1", "className": "Rogue" }],
+  "dealtClasses": ["Rogue", "Monk"],   // dealt, including classes since burned by a redraw
   "draws": [
     {
       "seq": 1,
@@ -124,8 +135,9 @@ where storage is blocked the chip warns that only exports will persist.
 Rarity is not stored on a draw — it is read from the catalog, so re-grading a character in the
 CSV updates past ledger entries too.
 
-Save files written before the Even Odds rewrite (`version: 1`) still load: their banner
-thresholds and per-draw rarity fields are dropped, and everything else is preserved.
+Older save files still load. A `version: 1` file has its banner thresholds and per-draw rarity
+fields dropped; a pre-`version: 3` file has its dealt-class pile reconstructed from whatever the
+contenders were holding. Everything else is preserved either way.
 
 ## Running it locally
 

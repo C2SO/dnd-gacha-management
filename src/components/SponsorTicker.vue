@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { SPONSOR_SLOGANS } from '../data/defaults'
 
-/** Rotating sponsor spot. Pure flavour — the arena is paid for somehow. */
+/** Rotating sponsor spot. Pure flavor — the arena is paid for somehow. */
 const index = ref(Math.floor(Math.random() * SPONSOR_SLOGANS.length))
 const visible = ref(true)
 let timer: ReturnType<typeof setInterval> | undefined

@@ -46,6 +46,7 @@ function assign(next: SessionFile) {
   state.catalog = next.catalog
   state.players = next.players
   state.draws = next.draws
+  state.dealtClasses = next.dealtClasses
 }
 
 let saveTimer: ReturnType<typeof setTimeout> | undefined
@@ -129,6 +130,11 @@ export function migrate(input: SessionFile): SessionFile {
       poolSize: d.poolSize ?? 0,
       at: d.at ?? new Date().toISOString(),
     })),
+    // Pre-v3 saves have no dealt pile: everything currently held counts as dealt, and classes
+    // redrawn away under the old reshuffle rules are (correctly) back in the deck.
+    dealtClasses:
+      input.dealtClasses ??
+      (input.players ?? []).map((p) => p.className).filter((c): c is string => !!c),
   }
 }
 
@@ -148,7 +154,7 @@ export function useSession() {
     return [...known.values()].sort((a, b) => a.id - b.id)
   })
 
-  const remainingClasses = computed(() => availableClasses(state.settings.classes, state.players))
+  const remainingClasses = computed(() => availableClasses(state.settings.classes, state.dealtClasses))
 
   const claimedBy = computed(() => {
     const map = new Map<number, Player>()
@@ -203,16 +209,20 @@ export function useSession() {
     if (player) player.name = name
   }
 
+  /**
+   * Deals the next class off the deck. A contender who already holds one does not put it back
+   * when redrawing — that class stays spent — so across the table a class is only ever dealt
+   * once, exactly like a summoned asset.
+   */
   function drawClass(playerId: string): string | null {
     const player = playerById.value.get(playerId)
     if (!player) return null
-    // Free the player's current class first so a redraw can land on it again.
-    const pool = availableClasses(
-      state.settings.classes,
-      state.players.filter((p) => p.id !== playerId),
-    )
-    const drawn = drawClassFrom(pool)
-    if (drawn) player.className = drawn
+
+    const drawn = drawClassFrom(remainingClasses.value)
+    if (!drawn) return null
+
+    state.dealtClasses.push(drawn)
+    player.className = drawn
     return drawn
   }
 
@@ -227,8 +237,10 @@ export function useSession() {
     return assigned
   }
 
+  /** Shuffles the deck back together: every class becomes dealable again. */
   function clearClasses() {
     for (const player of state.players) player.className = null
+    state.dealtClasses = []
   }
 
   function summon(playerId: string, bannerId: number, count: number) {

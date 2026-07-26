@@ -88,14 +88,23 @@ export interface SessionSettings {
 /** The whole application state, and byte-for-byte what import/export writes. */
 export interface SessionFile {
   format: 'dnd-gacha-session'
-  version: 2
+  version: 3
   savedAt: string
   settings: SessionSettings
   catalog: Unit[]
   players: Player[]
   draws: Draw[]
+  /**
+   * Every class handed out this session, including ones since redrawn away. Classes are dealt
+   * from a deck rather than drawn from a hat: a redraw burns the old class instead of shuffling
+   * it back, so no class is ever dealt twice.
+   */
+  dealtClasses: string[]
 }
 
 export const SESSION_FORMAT = 'dnd-gacha-session'
-/** v2 dropped per-banner rarity thresholds in favour of flat Even Odds draws. */
-export const SESSION_VERSION = 2
+/**
+ * v2 dropped per-banner rarity thresholds in favor of flat Even Odds draws.
+ * v3 added `dealtClasses` so classes are consumed from a deck rather than reshuffled.
+ */
+export const SESSION_VERSION = 3
