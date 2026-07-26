@@ -153,8 +153,10 @@ npm run preview  # serve the production build
 
 ## Deploying
 
-`.github/workflows/deploy.yml` builds and publishes to GitHub Pages on every push to the default
-branch (or on demand from the Actions tab → *Deploy to GitHub Pages* → *Run workflow*).
+`.github/workflows/deploy.yml` builds and publishes to GitHub Pages on every push to `main`.
+Feature branches deliberately do not publish, so work in review cannot overwrite the live site —
+to preview one, run the workflow against it by hand from the Actions tab → *Deploy to GitHub
+Pages* → *Run workflow* → pick the branch.
 
 **One-time setup:**
 
